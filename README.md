@@ -28,3 +28,7 @@ This does not work for external images, for example:
 
 This is because Obsidian adds no identifying classes to these images, so I couldn't find a reliable way of targeting them.
 Get in touch if you know a way to do this!
+
+---
+
+This plugin is based on concepts from https://github.com/bicarlsen/obsidian_image_caption
