@@ -13,17 +13,25 @@ export default class ImageCaptions extends Plugin {
             .forEach(container => {
               const img = container.querySelector('img')
               let captionText = container.getAttribute('alt') || ''
+              const width = container.getAttribute('width') || ''
               if (captionText === container.getAttribute('src')) {
                 captionText = ''
               }
               if (!img) return
-              if (container.querySelector('figure')) {
+              const figure = container.querySelector('figure')
+              if (figure) {
                 // Node has already been processed
                 // Check if the text needs to be updated
-                const figCaption = container.querySelector('figcaption')
-                if (figCaption && captionText !== img.dataset.caption) {
-                  // Set the caption text
-                  figCaption.innerText = captionText
+                if (!captionText) {
+                  // Caption has been removed, so remove the custom element
+                  container.appendChild(img)
+                  figure.remove()
+                } else {
+                  // Update the text in the existing element
+                  const figCaption = container.querySelector('figcaption')
+                  if (figCaption) {
+                    figCaption.innerText = captionText
+                  }
                 }
               } else {
                 if (img && captionText && captionText !== container.getAttribute('src')) {
@@ -36,8 +44,12 @@ export default class ImageCaptions extends Plugin {
                   })
                 }
               }
-              // Store the caption value so we can check for changes
-              img.dataset.caption = captionText // our location to store the caption
+              // Update the image width, if specified
+              if (width) {
+                img.setAttribute('width', width)
+              } else {
+                img.removeAttribute('width')
+              }
             })
         }
       })

@@ -16,6 +16,22 @@ and it will add the caption underneath the image, like this:
 
 ![](example.png)
 
+## Resize images
+
+You can use the existing Obsidian width parameter to resize your images:
+
+```markdown
+![[image.jpg|This is a caption|150]]
+```
+
+or this format:
+
+```markdown
+![This is a caption|150](image.jpg)
+```
+
+## Styling
+
 You can apply CSS styling by targeting the `.image-captions-figure` and `.image-captions-caption` classes.
 
 ## Limitations
