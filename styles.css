@@ -2,6 +2,7 @@
     margin: 0;
     padding: 2px;
     width: fit-content;
+    border-radius: 2px;
 }
 
 .image-captions-caption {
@@ -13,5 +14,5 @@
 }
 
 .theme-light .image-captions-figure {
-    background: #e9e9e9;
+    background: #ebebeb;
 }
