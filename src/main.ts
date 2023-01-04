@@ -12,7 +12,10 @@ export default class ImageCaptions extends Plugin {
             .querySelectorAll('.image-embed')
             .forEach(container => {
               const img = container.querySelector('img')
-              const captionText = container.getAttribute('alt') || ''
+              let captionText = container.getAttribute('alt') || ''
+              if (captionText === container.getAttribute('src')) {
+                captionText = ''
+              }
               if (!img) return
               if (container.querySelector('figure')) {
                 // Node has already been processed
@@ -23,7 +26,7 @@ export default class ImageCaptions extends Plugin {
                   figCaption.innerText = captionText
                 }
               } else {
-                if (img && captionText !== container.getAttribute('src')) {
+                if (img && captionText && captionText !== container.getAttribute('src')) {
                   const figure = container.createEl('figure')
                   figure.addClass('image-captions-figure')
                   figure.appendChild(img)
