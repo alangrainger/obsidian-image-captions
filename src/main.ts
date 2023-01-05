@@ -10,32 +10,38 @@ export default class ImageCaptions extends Plugin {
           (<Element>rec.target)
             // Search for all .image-embed nodes. Could be <div> or <span>
             .querySelectorAll('.image-embed')
-            .forEach(container => {
-              const img = container.querySelector('img')
-              let captionText = container.getAttribute('alt') || ''
-              const width = container.getAttribute('width') || ''
-              if (captionText === container.getAttribute('src')) {
+            .forEach(imageEmbedContainer => {
+              const img = imageEmbedContainer.querySelector('img')
+              let captionText = imageEmbedContainer.getAttribute('alt') || ''
+              const width = imageEmbedContainer.getAttribute('width') || ''
+              if (captionText === imageEmbedContainer.getAttribute('src')) {
                 captionText = ''
               }
               if (!img) return
-              const figure = container.querySelector('figure')
+              const figure = imageEmbedContainer.querySelector('figure')
+              const figCaption = imageEmbedContainer.querySelector('figcaption')
               if (figure) {
                 // Node has already been processed
                 // Check if the text needs to be updated
-                if (!captionText) {
-                  // Caption has been removed, so remove the custom element
-                  container.appendChild(img)
-                  figure.remove()
-                } else {
+                if (figCaption && captionText) {
                   // Update the text in the existing element
-                  const figCaption = container.querySelector('figcaption')
-                  if (figCaption) {
-                    figCaption.innerText = captionText
-                  }
+                  figCaption.innerText = captionText
+                } else if (!captionText) {
+                  // The alt-text has been removed, so remove the custom <figure> element
+                  // and set it back to how it was originally with just the plain <img> element
+                  imageEmbedContainer.appendChild(img)
+                  figure.remove()
                 }
               } else {
-                if (img && captionText && captionText !== container.getAttribute('src')) {
-                  const figure = container.createEl('figure')
+                if (captionText && captionText !== imageEmbedContainer.getAttribute('src')) {
+                  // Replace the original <img> element with this structure:
+                  /*
+                  <figure>
+                    <img>
+                    <figcaption>The caption text</figcaption>
+                  </figure>
+                  */
+                  const figure = imageEmbedContainer.createEl('figure')
                   figure.addClass('image-captions-figure')
                   figure.appendChild(img)
                   figure.createEl('figcaption', {
@@ -44,10 +50,11 @@ export default class ImageCaptions extends Plugin {
                   })
                 }
               }
-              // Update the image width, if specified
               if (width) {
+                // Update the image width, if specified
                 img.setAttribute('width', width)
               } else {
+                // It's critical to remove the empty width attribute, rather than setting it to ""
                 img.removeAttribute('width')
               }
             })
