@@ -6,7 +6,9 @@
 }
 
 .image-captions-caption {
-    margin: -5px 4px 0 4px;
+    margin: -5px 0 0 0;
+    padding: 3px 5px;
+    text-align: center;
 }
 
 .theme-dark .image-captions-figure {
