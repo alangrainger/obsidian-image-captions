@@ -1,9 +1,13 @@
-import { Plugin } from 'obsidian'
+import { MarkdownPostProcessor, Plugin } from 'obsidian'
 
 export default class ImageCaptions extends Plugin {
   observer: MutationObserver
 
   async onload () {
+    this.registerMarkdownPostProcessor(
+      externalImageProcessor()
+    )
+
     this.observer = new MutationObserver((mutations: MutationRecord[]) => {
       mutations.forEach((rec: MutationRecord) => {
         if (rec.type === 'childList') {
@@ -34,20 +38,7 @@ export default class ImageCaptions extends Plugin {
                 }
               } else {
                 if (captionText && captionText !== imageEmbedContainer.getAttribute('src')) {
-                  // Replace the original <img> element with this structure:
-                  /*
-                  <figure>
-                    <img>
-                    <figcaption>The caption text</figcaption>
-                  </figure>
-                  */
-                  const figure = imageEmbedContainer.createEl('figure')
-                  figure.addClass('image-captions-figure')
-                  figure.appendChild(img)
-                  figure.createEl('figcaption', {
-                    text: captionText,
-                    cls: 'image-captions-caption'
-                  })
+                  insertFigureWithCaption(img, imageEmbedContainer, captionText)
                 }
               }
               if (width) {
@@ -67,4 +58,43 @@ export default class ImageCaptions extends Plugin {
   onunload () {
     this.observer.disconnect()
   }
+}
+
+/**
+ * External images can be processed with a Markdown Post Processor, but only
+ * in Reading View.
+ */
+function externalImageProcessor (): MarkdownPostProcessor {
+  return (el) => {
+    el.findAll('img')
+      .forEach(img => {
+        const captionText = img.getAttribute('alt')
+        const parent = img.parentElement
+        if (parent && captionText && captionText !== img.getAttribute('src')) {
+          insertFigureWithCaption(img, parent, captionText)
+        }
+      })
+  }
+}
+
+/**
+ * Replace the original <img> element with this structure:
+ * @example
+ * <figure>
+ *   <img>
+ *   <figcaption>The caption text</figcaption>
+ * </figure>
+ *
+ * @param imageEl
+ * @param outerEl
+ * @param captionText
+ */
+function insertFigureWithCaption (imageEl: HTMLElement, outerEl: HTMLElement | Element, captionText: string) {
+  const figure = outerEl.createEl('figure')
+  figure.addClass('image-captions-figure')
+  figure.appendChild(imageEl)
+  figure.createEl('figcaption', {
+    text: captionText,
+    cls: 'image-captions-caption'
+  })
 }
