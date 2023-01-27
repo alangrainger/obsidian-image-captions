@@ -66,7 +66,7 @@ export default class ImageCaptions extends Plugin {
  */
 function externalImageProcessor (): MarkdownPostProcessor {
   return (el) => {
-    el.findAll('img')
+    el.findAll('img:not(.emoji)')
       .forEach(img => {
         const captionText = img.getAttribute('alt')
         const parent = img.parentElement
