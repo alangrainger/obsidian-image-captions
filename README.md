@@ -36,14 +36,13 @@ You can apply CSS styling by targeting the `.image-captions-figure` and `.image-
 
 ## Limitations
 
-This does not work for external images, for example:
+The captions won't show for external images in **Editing** mode. For example:
 
 ```markdown
-![This is an external image](https://obsidian.md/logo.png)
+![Not visible in Editing mode](https://obsidian.md/logo.png)
 ```
 
-This is because Obsidian adds no identifying classes to these images, so I couldn't find a reliable way of targeting them.
-Get in touch if you know a way to do this!
+I couldn't find a reliable way of targeting them. Get in touch if you know a way to do this!
 
 ---
 
