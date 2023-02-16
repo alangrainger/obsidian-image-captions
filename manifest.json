@@ -1,7 +1,7 @@
 {
 	"id": "image-captions",
 	"name": "Image Captions",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"minAppVersion": "0.15.0",
 	"description": "Adds captions to images when there is alt-text specified",
 	"author": "Alan Grainger",
