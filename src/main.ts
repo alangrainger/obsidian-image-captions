@@ -24,7 +24,7 @@ export default class ImageCaptions extends Plugin {
               if (!img) return
               const figure = imageEmbedContainer.querySelector('figure')
               const figCaption = imageEmbedContainer.querySelector('figcaption')
-              if (figure) {
+              if (figure || img.parentElement?.nodeName === 'FIGURE') {
                 // Node has already been processed
                 // Check if the text needs to be updated
                 if (figCaption && captionText) {
@@ -34,7 +34,7 @@ export default class ImageCaptions extends Plugin {
                   // The alt-text has been removed, so remove the custom <figure> element
                   // and set it back to how it was originally with just the plain <img> element
                   imageEmbedContainer.appendChild(img)
-                  figure.remove()
+                  figure?.remove()
                 }
               } else {
                 if (captionText && captionText !== imageEmbedContainer.getAttribute('src')) {
@@ -70,7 +70,7 @@ function externalImageProcessor (): MarkdownPostProcessor {
       .forEach(img => {
         const captionText = img.getAttribute('alt')
         const parent = img.parentElement
-        if (parent && captionText && captionText !== img.getAttribute('src')) {
+        if (parent && parent?.nodeName !== 'FIGURE' && captionText && captionText !== img.getAttribute('src')) {
           insertFigureWithCaption(img, parent, captionText)
         }
       })
