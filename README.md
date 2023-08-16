@@ -30,6 +30,21 @@ or this format:
 ![This is a caption|150](image.jpg)
 ```
 
+## Use filename as caption
+
+If you want to use the image filename as the caption, specify `%` as your caption, and it will
+replace that with the filename (without extension):
+
+```markdown
+![[image.jpg|%]]
+```
+
+If you want to literally use the `%` character as the caption, you can escape it:
+
+```markdown
+![[image.jpg|\%]]
+```
+
 ## Styling
 
 You can apply CSS styling by targeting the `.image-captions-figure` and `.image-captions-caption` classes.
