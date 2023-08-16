@@ -1,5 +1,7 @@
 import { MarkdownPostProcessor, Plugin } from 'obsidian'
 
+const filenamePlaceholder: string = '%'
+
 export default class ImageCaptions extends Plugin {
   observer: MutationObserver
 
@@ -16,11 +18,8 @@ export default class ImageCaptions extends Plugin {
             .querySelectorAll('.image-embed')
             .forEach(imageEmbedContainer => {
               const img = imageEmbedContainer.querySelector('img')
-              let captionText = imageEmbedContainer.getAttribute('alt') || ''
               const width = imageEmbedContainer.getAttribute('width') || ''
-              if (captionText === imageEmbedContainer.getAttribute('src')) {
-                captionText = ''
-              }
+              const captionText = getCaptionText(imageEmbedContainer)
               if (!img) return
               const figure = imageEmbedContainer.querySelector('figure')
               const figCaption = imageEmbedContainer.querySelector('figcaption')
@@ -52,12 +51,39 @@ export default class ImageCaptions extends Plugin {
         }
       })
     })
-    this.observer.observe(document.body, {subtree: true, childList: true})
+    this.observer.observe(document.body, { subtree: true, childList: true })
   }
 
   onunload () {
     this.observer.disconnect()
   }
+}
+
+/**
+ * Process an HTMLElement or Element to extract the caption text
+ * from the alt attribute.
+ *
+ * Optionally use the image filename if the filenamePlaceholder is specified.
+ *
+ * @param img
+ */
+function getCaptionText (img: HTMLElement | Element) {
+  let captionText = img.getAttribute('alt') || ''
+  const src = img.getAttribute('src') || ''
+  if (captionText === src) {
+    // If no caption is specified, then Obsidian puts the src in the alt attribute
+    captionText = ''
+  } else if (captionText === filenamePlaceholder) {
+    // Optionally use filename as caption text if the placeholder is used
+    const match = src.match(/[^\\\/]+(?=\.\w+$)|[^\\\/]+$/)
+    if (match?.[0]) {
+      captionText = match[0]
+    }
+  } else if (captionText === '\\' + filenamePlaceholder) {
+    // Remove the escaping to allow the placeholder to be used verbatim
+    captionText = filenamePlaceholder
+  }
+  return captionText
 }
 
 /**
@@ -68,7 +94,7 @@ function externalImageProcessor (): MarkdownPostProcessor {
   return (el) => {
     el.findAll('img:not(.emoji)')
       .forEach(img => {
-        const captionText = img.getAttribute('alt')
+        const captionText = getCaptionText(img)
         const parent = img.parentElement
         if (parent && parent?.nodeName !== 'FIGURE' && captionText && captionText !== img.getAttribute('src')) {
           insertFigureWithCaption(img, parent, captionText)
