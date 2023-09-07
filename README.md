@@ -47,6 +47,8 @@ If you want to literally use the `%` character as the caption, you can escape it
 ![[image.jpg|\%]]
 ```
 
+If you want the filename including extension, use `%.%`.
+
 ## Styling
 
 You can apply CSS styling by targeting the `.image-captions-figure` and `.image-captions-caption` classes.

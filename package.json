@@ -1,6 +1,6 @@
 {
 	"name": "image-captions",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"description": "Adds captions to images when there is alt-text specified",
 	"main": "main.js",
 	"scripts": {

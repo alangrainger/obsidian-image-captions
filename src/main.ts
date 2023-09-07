@@ -1,6 +1,7 @@
 import { MarkdownPostProcessor, Plugin } from 'obsidian'
 
 const filenamePlaceholder: string = '%'
+const filenameExtensionPlaceholder: string = '%.%'
 
 export default class ImageCaptions extends Plugin {
   observer: MutationObserver
@@ -76,6 +77,12 @@ function getCaptionText (img: HTMLElement | Element) {
   } else if (captionText === filenamePlaceholder) {
     // Optionally use filename as caption text if the placeholder is used
     const match = src.match(/[^\\\/]+(?=\.\w+$)|[^\\\/]+$/)
+    if (match?.[0]) {
+      captionText = match[0]
+    }
+  } else if (captionText === filenameExtensionPlaceholder) {
+    // Optionally use filename (including extension) as caption text if the placeholder is used
+    const match = src.match(/[^\\\/]+$/)
     if (match?.[0]) {
       captionText = match[0]
     }
