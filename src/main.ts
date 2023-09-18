@@ -1,4 +1,4 @@
-import { MarkdownPostProcessor, Plugin } from 'obsidian'
+import { Component, MarkdownPostProcessor, MarkdownRenderer, Plugin } from 'obsidian'
 
 const filenamePlaceholder: string = '%'
 const filenameExtensionPlaceholder: string = '%.%'
@@ -6,9 +6,9 @@ const filenameExtensionPlaceholder: string = '%.%'
 export default class ImageCaptions extends Plugin {
   observer: MutationObserver
 
-  async onload () {
+  async onload() {
     this.registerMarkdownPostProcessor(
-      externalImageProcessor()
+      externalImageProcessor(this)
     )
 
     this.observer = new MutationObserver((mutations: MutationRecord[]) => {
@@ -17,7 +17,7 @@ export default class ImageCaptions extends Plugin {
           (<Element>rec.target)
             // Search for all .image-embed nodes. Could be <div> or <span>
             .querySelectorAll('.image-embed')
-            .forEach(imageEmbedContainer => {
+            .forEach(async imageEmbedContainer => {
               const img = imageEmbedContainer.querySelector('img')
               const width = imageEmbedContainer.getAttribute('width') || ''
               const captionText = getCaptionText(imageEmbedContainer)
@@ -29,7 +29,8 @@ export default class ImageCaptions extends Plugin {
                 // Check if the text needs to be updated
                 if (figCaption && captionText) {
                   // Update the text in the existing element
-                  figCaption.innerText = captionText
+                  const children = await renderMarkdown(captionText, "", this) ?? [captionText];
+                  figCaption.replaceChildren(...children);
                 } else if (!captionText) {
                   // The alt-text has been removed, so remove the custom <figure> element
                   // and set it back to how it was originally with just the plain <img> element
@@ -38,7 +39,7 @@ export default class ImageCaptions extends Plugin {
                 }
               } else {
                 if (captionText && captionText !== imageEmbedContainer.getAttribute('src')) {
-                  insertFigureWithCaption(img, imageEmbedContainer, captionText)
+                  insertFigureWithCaption(img, imageEmbedContainer, captionText, "", this)
                 }
               }
               if (width) {
@@ -55,8 +56,8 @@ export default class ImageCaptions extends Plugin {
     this.observer.observe(document.body, { subtree: true, childList: true })
   }
 
-  onunload () {
-    this.observer.disconnect()
+  onunload() {
+    // this.observer.disconnect()
   }
 }
 
@@ -68,7 +69,7 @@ export default class ImageCaptions extends Plugin {
  *
  * @param img
  */
-function getCaptionText (img: HTMLElement | Element) {
+function getCaptionText(img: HTMLElement | Element) {
   let captionText = img.getAttribute('alt') || ''
   const src = img.getAttribute('src') || ''
   if (captionText === src) {
@@ -90,6 +91,9 @@ function getCaptionText (img: HTMLElement | Element) {
     // Remove the escaping to allow the placeholder to be used verbatim
     captionText = filenamePlaceholder
   }
+  captionText = captionText.replace(/\<\<(.*?)\>\>/g, (match, linktext) => {
+    return '[[' + linktext + ']]'
+  })
   return captionText
 }
 
@@ -97,14 +101,14 @@ function getCaptionText (img: HTMLElement | Element) {
  * External images can be processed with a Markdown Post Processor, but only
  * in Reading View.
  */
-function externalImageProcessor (): MarkdownPostProcessor {
-  return (el) => {
+function externalImageProcessor(plugin: ImageCaptions): MarkdownPostProcessor {
+  return (el, ctx) => {
     el.findAll('img:not(.emoji)')
       .forEach(img => {
         const captionText = getCaptionText(img)
         const parent = img.parentElement
         if (parent && parent?.nodeName !== 'FIGURE' && captionText && captionText !== img.getAttribute('src')) {
-          insertFigureWithCaption(img, parent, captionText)
+          insertFigureWithCaption(img, parent, captionText, ctx.sourcePath, plugin)
         }
       })
   }
@@ -122,12 +126,30 @@ function externalImageProcessor (): MarkdownPostProcessor {
  * @param outerEl
  * @param captionText
  */
-function insertFigureWithCaption (imageEl: HTMLElement, outerEl: HTMLElement | Element, captionText: string) {
+async function insertFigureWithCaption(imageEl: HTMLElement, outerEl: HTMLElement | Element, captionText: string, sourcePath: string, plugin: ImageCaptions) {
   const figure = outerEl.createEl('figure')
   figure.addClass('image-captions-figure')
   figure.appendChild(imageEl)
+  const children = await renderMarkdown(captionText, sourcePath, plugin) ?? [captionText];
   figure.createEl('figcaption', {
-    text: captionText,
     cls: 'image-captions-caption'
-  })
+  }).replaceChildren(...children);
+}
+
+/**
+ * Easy-to-use version of MarkdownRenderer.renderMarkdown. Returns only the child nodes, rather than a container block.
+ * @param markdown 
+ * @param sourcePath 
+ * @param component - Typically you can just pass the plugin instance, but Liam from the Obsidian team says 
+ *   it's not a good practice (https://github.com/obsidianmd/obsidian-releases/pull/2263#issuecomment-1711864829). 
+ *   I'm currently struggling to find a proper way to do it.
+ */
+export async function renderMarkdown(markdown: string, sourcePath: string, component: Component): Promise<NodeList | undefined> {
+  const el = createDiv();
+  await MarkdownRenderer.renderMarkdown(markdown, el, sourcePath, component);
+  for (const child of el.children) {
+    if (child.tagName == "P") {
+      return child.childNodes;
+    }
+  }
 }
