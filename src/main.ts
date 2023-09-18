@@ -57,7 +57,7 @@ export default class ImageCaptions extends Plugin {
   }
 
   onunload() {
-    // this.observer.disconnect()
+    this.observer.disconnect()
   }
 }
 
