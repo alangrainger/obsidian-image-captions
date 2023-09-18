@@ -1,7 +1,7 @@
 .image-captions-figure {
     margin: 0;
     padding: 2px;
-    width: fit-content;
+    display: table; /* To allow for correct caption text wrapping */
     border-radius: 2px;
 }
 
@@ -9,12 +9,16 @@
     margin: -5px 0 0 0;
     padding: 3px 5px;
     text-align: center;
+    display: table-caption; /* To allow for correct caption text wrapping */
+    caption-side: bottom;
 }
 
-.theme-dark .image-captions-figure {
+.theme-dark .image-captions-figure,
+.theme-dark .image-captions-caption {
     background: #303030;
 }
 
-.theme-light .image-captions-figure {
+.theme-light .image-captions-figure,
+.theme-light .image-captions-caption {
     background: #ebebeb;
 }
