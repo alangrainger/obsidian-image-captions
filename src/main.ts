@@ -1,7 +1,7 @@
 import { Component, MarkdownPostProcessor, MarkdownRenderer, Plugin } from 'obsidian'
 
-const filenamePlaceholder: string = '%'
-const filenameExtensionPlaceholder: string = '%.%'
+const filenamePlaceholder = '%'
+const filenameExtensionPlaceholder = '%.%'
 
 export default class ImageCaptions extends Plugin {
   observer: MutationObserver
@@ -77,13 +77,13 @@ function getCaptionText (img: HTMLElement | Element) {
     captionText = ''
   } else if (captionText === filenamePlaceholder) {
     // Optionally use filename as caption text if the placeholder is used
-    const match = src.match(/[^\\\/]+(?=\.\w+$)|[^\\\/]+$/)
+    const match = src.match(/[^\\/]+(?=\.\w+$)|[^\\/]+$/)
     if (match?.[0]) {
       captionText = match[0]
     }
   } else if (captionText === filenameExtensionPlaceholder) {
     // Optionally use filename (including extension) as caption text if the placeholder is used
-    const match = src.match(/[^\\\/]+$/)
+    const match = src.match(/[^\\/]+$/)
     if (match?.[0]) {
       captionText = match[0]
     }
@@ -149,7 +149,7 @@ export async function renderMarkdown (markdown: string, sourcePath: string, comp
   const el = createDiv()
   await MarkdownRenderer.renderMarkdown(markdown, el, sourcePath, component)
   for (const child of el.children) {
-    if (child.tagName == 'P') {
+    if (child.tagName.toLowerCase() === 'p') {
       return child.childNodes
     }
   }
