@@ -32,6 +32,26 @@ or this format:
 ![This is a caption|150](image.jpg)
 ```
 
+## Markdown in captions
+
+You can include inline Markdown and it will be rendered as part of the caption:
+
+```markdown
+![[image.jpg|This is a caption with **bold text**]]
+```
+
+You can use Markdown links as normal:
+
+```markdown
+![[image.jpg|This is a caption with [a link to Obsidian](https://obsidian.md)]]
+```
+
+To use Wikilinks, you'll need to swap your square brackets `[[]]` for angle brackets `<<>>`:
+
+```markdown
+![[image.jpg|This is a caption with <<a Wikilink>>]]
+```
+
 ## Use filename as caption
 
 If you want to use the image filename as the caption, specify `%` as your caption, and it will
