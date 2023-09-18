@@ -98,8 +98,7 @@ function getCaptionText (img: HTMLElement | Element) {
 }
 
 /**
- * External images can be processed with a Markdown Post Processor, but only
- * in Reading View.
+ * External images can be processed with a Markdown Post Processor, but only in Reading View.
  */
 function externalImageProcessor (plugin: ImageCaptions): MarkdownPostProcessor {
   return (el, ctx) => {
@@ -122,8 +121,8 @@ function externalImageProcessor (plugin: ImageCaptions): MarkdownPostProcessor {
  *   <figcaption>The caption text</figcaption>
  * </figure>
  *
- * @param imageEl
- * @param outerEl
+ * @param {HTMLElement} imageEl - The original image element to insert inside the <figure>
+ * @param {HTMLElement|Element} outerEl - Most likely the parent of the original <img>
  * @param captionText
  * @param sourcePath
  * @param plugin
