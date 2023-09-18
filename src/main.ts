@@ -1,4 +1,4 @@
-import { Component, MarkdownPostProcessor, MarkdownRenderer, Plugin } from 'obsidian'
+import { Component, FileView, MarkdownPostProcessor, MarkdownRenderer, Plugin, Workspace } from 'obsidian'
 
 const filenamePlaceholder = '%'
 const filenameExtensionPlaceholder = '%.%'
@@ -29,7 +29,8 @@ export default class ImageCaptions extends Plugin {
                 // Check if the text needs to be updated
                 if (figCaption && captionText) {
                   // Update the text in the existing element
-                  const children = await renderMarkdown(captionText, '', this) ?? [captionText]
+                  const sourcePath = getSourcePath(img, this.app.workspace);
+                  const children = await renderMarkdown(captionText, sourcePath, this) ?? [captionText]
                   figCaption.replaceChildren(...children)
                 } else if (!captionText) {
                   // The alt-text has been removed, so remove the custom <figure> element
@@ -39,6 +40,7 @@ export default class ImageCaptions extends Plugin {
                 }
               } else {
                 if (captionText && captionText !== imageEmbedContainer.getAttribute('src')) {
+                  const sourcePath = getSourcePath(img, this.app.workspace);
                   await insertFigureWithCaption(img, imageEmbedContainer, captionText, '', this)
                 }
               }
@@ -145,7 +147,7 @@ async function insertFigureWithCaption (imageEl: HTMLElement, outerEl: HTMLEleme
  *   it's not a good practice (https://github.com/obsidianmd/obsidian-releases/pull/2263#issuecomment-1711864829).
  *   I'm currently struggling to find a proper way to do it.
  */
-export async function renderMarkdown (markdown: string, sourcePath: string, component: Component): Promise<NodeList | undefined> {
+async function renderMarkdown (markdown: string, sourcePath: string, component: Component): Promise<NodeList | undefined> {
   const el = createDiv()
   await MarkdownRenderer.renderMarkdown(markdown, el, sourcePath, component)
   for (const child of el.children) {
@@ -153,4 +155,14 @@ export async function renderMarkdown (markdown: string, sourcePath: string, comp
       return child.childNodes
     }
   }
+}
+
+function getSourcePath(el: HTMLElement, workspace: Workspace) {
+  let sourcePath = '';
+  workspace.iterateAllLeaves((leaf) => {
+    if (leaf.view instanceof FileView && leaf.view.file && leaf.view.containerEl.contains(el)) {
+      sourcePath = leaf.view.file.path;
+    }
+  })
+  return sourcePath;
 }
