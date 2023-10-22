@@ -49,6 +49,32 @@ export default class ImageCaptions extends Plugin {
                 // It's critical to remove the empty width attribute, rather than setting it to ""
                 img.removeAttribute('width')
               }
+            });
+          (<Element>rec.target)
+            // Search for all .pdf-embed nodes. Could be <div> or <span>
+            .querySelectorAll('.pdf-embed')
+            .forEach(async pdfEmbedContainer => {
+              const pdf = pdfEmbedContainer.querySelector('div .pdf-container')
+              if (!pdf) return
+              const captionText = getCaptionText(pdfEmbedContainer)
+              const figure = pdfEmbedContainer.querySelector('figure')
+              const figCaption = pdfEmbedContainer.querySelector('figcaption')
+              if (figure) {
+                // Node has already been processed
+                // Check if the text needs to be updated
+                if (figCaption && captionText) {
+                  // Update the text in the existing element
+                  const children = await renderMarkdown(captionText, '', this) ?? [captionText]
+                  figCaption.replaceChildren(...children)
+                } else if (!captionText) {
+                  // The alt-text has been removed, so remove the custom <figure> element
+                  figure?.remove()
+                }
+              } else {
+                if (captionText && captionText !== pdfEmbedContainer.getAttribute('src')) {
+                  await insertFigureWithCaptionForPDF(pdfEmbedContainer, captionText, '', this)
+                }
+              }
             })
         }
       })
@@ -131,6 +157,28 @@ async function insertFigureWithCaption (imageEl: HTMLElement, outerEl: HTMLEleme
   const figure = outerEl.createEl('figure')
   figure.addClass('image-captions-figure')
   figure.appendChild(imageEl)
+  const children = await renderMarkdown(captionText, sourcePath, plugin) ?? [captionText]
+  figure.createEl('figcaption', {
+    cls: 'image-captions-caption'
+  }).replaceChildren(...children)
+}
+
+/**
+ * Insert to the end an element with this structure:
+ * @example
+ * <figure>
+ *   <img>
+ *   <figcaption>The caption text</figcaption>
+ * </figure>
+ *
+ * @param {HTMLElement|Element} outerEl - Most likely the parent of the original <img>
+ * @param captionText
+ * @param sourcePath
+ * @param plugin
+ */
+async function insertFigureWithCaptionForPDF (outerEl: HTMLElement | Element, captionText: string, sourcePath: string, plugin: ImageCaptions) {
+  const figure = outerEl.createEl('figure')
+  figure.addClass('image-captions-figure')
   const children = await renderMarkdown(captionText, sourcePath, plugin) ?? [captionText]
   figure.createEl('figcaption', {
     cls: 'image-captions-caption'
