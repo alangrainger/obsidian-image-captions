@@ -1,15 +1,20 @@
 import { Component, MarkdownPostProcessor, MarkdownRenderer, Plugin } from 'obsidian'
+import { CaptionSettings, CaptionSettingTab, DEFAULT_SETTINGS } from './settings'
 
 const filenamePlaceholder = '%'
 const filenameExtensionPlaceholder = '%.%'
 
 export default class ImageCaptions extends Plugin {
+  settings: CaptionSettings
   observer: MutationObserver
 
   async onload () {
     this.registerMarkdownPostProcessor(
-      externalImageProcessor(this)
+      this.externalImageProcessor()
     )
+
+    await this.loadSettings()
+    this.addSettingTab(new CaptionSettingTab(this.app, this))
 
     this.observer = new MutationObserver((mutations: MutationRecord[]) => {
       mutations.forEach((rec: MutationRecord) => {
@@ -20,7 +25,7 @@ export default class ImageCaptions extends Plugin {
             .forEach(async imageEmbedContainer => {
               const img = imageEmbedContainer.querySelector('img')
               const width = imageEmbedContainer.getAttribute('width') || ''
-              const captionText = getCaptionText(imageEmbedContainer)
+              const captionText = this.getCaptionText(imageEmbedContainer)
               if (!img) return
               const figure = imageEmbedContainer.querySelector('figure')
               const figCaption = imageEmbedContainer.querySelector('figcaption')
@@ -39,7 +44,7 @@ export default class ImageCaptions extends Plugin {
                 }
               } else {
                 if (captionText && captionText !== imageEmbedContainer.getAttribute('src')) {
-                  await insertFigureWithCaption(img, imageEmbedContainer, captionText, '', this)
+                  await this.insertFigureWithCaption(img, imageEmbedContainer, captionText, '')
                 }
               }
               if (width) {
@@ -53,88 +58,111 @@ export default class ImageCaptions extends Plugin {
         }
       })
     })
-    this.observer.observe(document.body, { subtree: true, childList: true })
+    this.observer.observe(document.body, {
+      subtree: true,
+      childList: true
+    })
+  }
+
+  /**
+   * Process an HTMLElement or Element to extract the caption text
+   * from the alt attribute.
+   *
+   * Optionally use the image filename if the filenamePlaceholder is specified.
+   *
+   * @param img
+   */
+  getCaptionText (img: HTMLElement | Element) {
+    let captionText = img.getAttribute('alt') || ''
+    const src = img.getAttribute('src') || ''
+    if (captionText === src) {
+      // If no caption is specified then Obsidian puts the src in the alt attribute,
+      // so we need to set a blank caption.
+      return ''
+    }
+
+    // Perform the regex, if any
+    if (this.settings.captionRegex) {
+      try {
+        const match = captionText.match(new RegExp(this.settings.captionRegex))
+        if (match && match[1]) captionText = match[1]
+      } catch (e) {
+        // Invalid regex
+      }
+    }
+
+    if (captionText === filenamePlaceholder) {
+      // Optionally use filename as caption text if the placeholder is used
+      const match = src.match(/[^\\/]+(?=\.\w+$)|[^\\/]+$/)
+      if (match?.[0]) {
+        captionText = match[0]
+      }
+    } else if (captionText === filenameExtensionPlaceholder) {
+      // Optionally use filename (including extension) as caption text if the placeholder is used
+      const match = src.match(/[^\\/]+$/)
+      if (match?.[0]) {
+        captionText = match[0]
+      }
+    } else if (captionText === '\\' + filenamePlaceholder) {
+      // Remove the escaping to allow the placeholder to be used verbatim
+      captionText = filenamePlaceholder
+    }
+    captionText = captionText.replace(/<<(.*?)>>/g, (_, linktext) => {
+      return '[[' + linktext + ']]'
+    })
+    return captionText
+  }
+
+  /**
+   * External images can be processed with a Markdown Post Processor, but only in Reading View.
+   */
+  externalImageProcessor (): MarkdownPostProcessor {
+    return (el, ctx) => {
+      el.findAll('img:not(.emoji)')
+        .forEach(async img => {
+          const captionText = this.getCaptionText(img)
+          const parent = img.parentElement
+          if (parent && parent?.nodeName !== 'FIGURE' && captionText && captionText !== img.getAttribute('src')) {
+            await this.insertFigureWithCaption(img, parent, captionText, ctx.sourcePath)
+          }
+        })
+    }
+  }
+
+  /**
+   * Replace the original <img> element with this structure:
+   * @example
+   * <figure>
+   *   <img>
+   *   <figcaption>The caption text</figcaption>
+   * </figure>
+   *
+   * @param {HTMLElement} imageEl - The original image element to insert inside the <figure>
+   * @param {HTMLElement|Element} outerEl - Most likely the parent of the original <img>
+   * @param captionText
+   * @param sourcePath
+   */
+  async insertFigureWithCaption (imageEl: HTMLElement, outerEl: HTMLElement | Element, captionText: string, sourcePath: string) {
+    const figure = outerEl.createEl('figure')
+    figure.addClass('image-captions-figure')
+    figure.appendChild(imageEl)
+    const children = await renderMarkdown(captionText, sourcePath, this) ?? [captionText]
+    figure.createEl('figcaption', {
+      cls: 'image-captions-caption'
+    }).replaceChildren(...children)
+  }
+
+  async loadSettings () {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
+  }
+
+  async saveSettings () {
+    await this.saveData(this.settings)
   }
 
   onunload () {
     this.observer.disconnect()
   }
-}
-
-/**
- * Process an HTMLElement or Element to extract the caption text
- * from the alt attribute.
- *
- * Optionally use the image filename if the filenamePlaceholder is specified.
- *
- * @param img
- */
-function getCaptionText (img: HTMLElement | Element) {
-  let captionText = img.getAttribute('alt') || ''
-  const src = img.getAttribute('src') || ''
-  if (captionText === src) {
-    // If no caption is specified, then Obsidian puts the src in the alt attribute
-    captionText = ''
-  } else if (captionText === filenamePlaceholder) {
-    // Optionally use filename as caption text if the placeholder is used
-    const match = src.match(/[^\\/]+(?=\.\w+$)|[^\\/]+$/)
-    if (match?.[0]) {
-      captionText = match[0]
-    }
-  } else if (captionText === filenameExtensionPlaceholder) {
-    // Optionally use filename (including extension) as caption text if the placeholder is used
-    const match = src.match(/[^\\/]+$/)
-    if (match?.[0]) {
-      captionText = match[0]
-    }
-  } else if (captionText === '\\' + filenamePlaceholder) {
-    // Remove the escaping to allow the placeholder to be used verbatim
-    captionText = filenamePlaceholder
-  }
-  captionText = captionText.replace(/<<(.*?)>>/g, (match, linktext) => {
-    return '[[' + linktext + ']]'
-  })
-  return captionText
-}
-
-/**
- * External images can be processed with a Markdown Post Processor, but only in Reading View.
- */
-function externalImageProcessor (plugin: ImageCaptions): MarkdownPostProcessor {
-  return (el, ctx) => {
-    el.findAll('img:not(.emoji)')
-      .forEach(async img => {
-        const captionText = getCaptionText(img)
-        const parent = img.parentElement
-        if (parent && parent?.nodeName !== 'FIGURE' && captionText && captionText !== img.getAttribute('src')) {
-          await insertFigureWithCaption(img, parent, captionText, ctx.sourcePath, plugin)
-        }
-      })
-  }
-}
-
-/**
- * Replace the original <img> element with this structure:
- * @example
- * <figure>
- *   <img>
- *   <figcaption>The caption text</figcaption>
- * </figure>
- *
- * @param {HTMLElement} imageEl - The original image element to insert inside the <figure>
- * @param {HTMLElement|Element} outerEl - Most likely the parent of the original <img>
- * @param captionText
- * @param sourcePath
- * @param plugin
- */
-async function insertFigureWithCaption (imageEl: HTMLElement, outerEl: HTMLElement | Element, captionText: string, sourcePath: string, plugin: ImageCaptions) {
-  const figure = outerEl.createEl('figure')
-  figure.addClass('image-captions-figure')
-  figure.appendChild(imageEl)
-  const children = await renderMarkdown(captionText, sourcePath, plugin) ?? [captionText]
-  figure.createEl('figcaption', {
-    cls: 'image-captions-caption'
-  }).replaceChildren(...children)
 }
 
 /**
