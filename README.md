@@ -69,6 +69,25 @@ If you want to literally use the `%` character as the caption, you can escape it
 
 If you want the filename including extension, use `%.%`.
 
+## Custom regex to filter caption
+
+If you use other themes or plugins which require you to add data into the image description field, you can use a 
+regex to remove those from the final caption. You will find this in the plugin Settings.
+
+Two common examples would be from the ITS Theme, which lets you put `|right` etc to change the postion of your image.
+
+To remove everything after the first pipe `|` character from your caption:
+
+```
+^([^|]+)
+```
+
+If you want to keep escaped pipes `\|` (in case you are using internal links), use:
+
+```
+^((\\\||[^|])+)
+```
+
 ## Styling
 
 You can apply CSS styling by targeting the `.image-captions-figure` and `.image-captions-caption` classes.
