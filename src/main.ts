@@ -21,9 +21,9 @@ export default class ImageCaptions extends Plugin {
         if (rec.type === 'childList') {
           (<Element>rec.target)
             // Search for all .image-embed nodes. Could be <div> or <span>
-            .querySelectorAll('.image-embed')
+            .querySelectorAll('.image-embed, .video-embed')
             .forEach(async imageEmbedContainer => {
-              const img = imageEmbedContainer.querySelector('img')
+              const img = imageEmbedContainer.querySelector('img, video')
               const width = imageEmbedContainer.getAttribute('width') || ''
               const captionText = this.getCaptionText(imageEmbedContainer)
               if (!img) return
@@ -118,7 +118,7 @@ export default class ImageCaptions extends Plugin {
    */
   externalImageProcessor (): MarkdownPostProcessor {
     return (el, ctx) => {
-      el.findAll('img:not(.emoji)')
+      el.findAll('img:not(.emoji), video')
         .forEach(async img => {
           const captionText = this.getCaptionText(img)
           const parent = img.parentElement
