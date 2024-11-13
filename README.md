@@ -54,8 +54,8 @@ To use Wikilinks, you'll need to swap your square brackets `[[]]` for angle brac
 
 ## Use filename as caption
 
-If you want to use the image filename as the caption, specify `%` as your caption, and it will
-replace that with the filename (without extension):
+If you want to use the image filename as the caption, specify `%` as the sole text of your 
+caption, and it will replace that with the filename (without extension):
 
 ```markdown
 ![[image.jpg|%]]
