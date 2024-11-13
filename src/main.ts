@@ -44,7 +44,7 @@ export default class ImageCaptions extends Plugin {
                 }
               } else {
                 if (captionText && captionText !== imageEmbedContainer.getAttribute('src')) {
-                  await this.insertFigureWithCaption(img, imageEmbedContainer, captionText, '')
+                  await this.insertFigureWithCaption(img as HTMLElement, imageEmbedContainer, captionText, '')
                 }
               }
               if (width) {
