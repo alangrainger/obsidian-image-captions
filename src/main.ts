@@ -75,7 +75,10 @@ export default class ImageCaptions extends Plugin {
   getCaptionText (img: HTMLElement | Element) {
     let captionText = img.getAttribute('alt') || ''
     const src = img.getAttribute('src') || ''
-    if (captionText === src) {
+    // If a wikilink is in the format [[image.png#foo]], Obsidian changes the captionText
+    // to be 'image.png > foo'. We need to test for this edge case also.
+    const edge = captionText.replace(/ > /, '#')
+    if (captionText === src || edge === src) {
       // If no caption is specified then Obsidian puts the src in the alt attribute,
       // so we need to set a blank caption.
       return ''
