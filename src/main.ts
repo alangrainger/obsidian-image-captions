@@ -88,7 +88,11 @@ export default class ImageCaptions extends Plugin {
     if (this.settings.captionRegex) {
       try {
         const match = captionText.match(new RegExp(this.settings.captionRegex))
-        if (match && match[1]) captionText = match[1]
+        if (match && match[1]) {
+          captionText = match[1]
+        } else {
+          captionText = ''
+        }
       } catch (e) {
         // Invalid regex
       }
