@@ -94,13 +94,15 @@ You can apply CSS styling by targeting the `.image-captions-figure` and `.image-
 
 ## Limitations
 
-The captions won't show for external images in **Editing / Live Preview** mode. For example:
+External images won't show the caption in **Editing / Live Preview** mode. For example:
 
 ```markdown
 ![Not visible in Editing mode](https://obsidian.md/logo.png)
 ```
 
 I couldn't find a reliable way of targeting them. Get in touch if you know a way to do this!
+
+Internal images are fine.
 
 ---
 
