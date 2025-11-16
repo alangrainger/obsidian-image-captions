@@ -32,6 +32,18 @@ or this format:
 ![This is a caption|150](image.jpg)
 ```
 
+## Image alignment
+
+You can center images or float them to the left and right, and resize also:
+
+```
+![[image.jpg|This is a caption|center]]
+
+![[image.jpg|This is a caption|left]]
+
+![[image.jpg|This is a caption|right|150]]
+```
+
 ## Markdown in captions
 
 You can include inline Markdown and it will be rendered as part of the caption:
