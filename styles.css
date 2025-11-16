@@ -13,12 +13,20 @@
     caption-side: bottom;
 }
 
-.theme-dark .image-captions-figure,
-.theme-dark .image-captions-caption {
-    background: #303030;
+.image-captions-figure, .image-captions-caption {
+    background: var(--color-base-30);
 }
 
-.theme-light .image-captions-figure,
-.theme-light .image-captions-caption {
-    background: #ebebeb;
+figure.image-captions-figure:has(img[alt*="|left"]) {
+    float: left;
+    margin-right: 1em;
+}
+
+figure.image-captions-figure:has(img[alt*="|right"]) {
+    float: right;
+    margin-left: 1em;
+}
+
+figure.image-captions-figure:has(img[alt*="|center"]) {
+    margin: 0 auto;
 }
