@@ -150,12 +150,15 @@ export default class ImageCaptions extends Plugin {
    * @param sourcePath
    */
   async insertFigureWithCaption (imageEl: HTMLElement, outerEl: HTMLElement | Element, captionText: string, sourcePath: string) {
-    const figure = outerEl.createEl('figure')
+    const figure = outerEl.createEl('figure', {
+      attr: { "style": "background:" + this.settings.captionImgColor}
+    })
     figure.addClass('image-captions-figure')
     figure.appendChild(imageEl)
     const children = await renderMarkdown(captionText, sourcePath, this) ?? [captionText]
     figure.createEl('figcaption', {
-      cls: 'image-captions-caption'
+      cls: 'image-captions-caption',
+      attr: { "style": "background:" + this.settings.captionBckColor }
     }).replaceChildren(...children)
   }
 
