@@ -30,3 +30,29 @@ figure.image-captions-figure.image-captions-right {
 figure.image-captions-figure.image-captions-center {
     margin: 0 auto;
 }
+
+/*
+In Live Preview (Obsidian 1.13+) the embed container shrinks to fit the image and
+Obsidian forces its margin to 0, so aligning the figure inside it has no effect.
+Align the container itself instead.
+*/
+.markdown-source-view.mod-cm6 .cm-content > .image-embed:has(> figure.image-captions-center) {
+    margin-inline: auto !important;
+}
+
+.markdown-source-view.mod-cm6 .cm-content > .image-embed:has(> figure.image-captions-right) {
+    margin-inline-start: auto !important;
+}
+
+/* When the embed sits inline inside an editor line, align the line's content instead */
+.markdown-source-view.mod-cm6 .cm-line:has(> .image-embed > figure.image-captions-center) {
+    text-align: center;
+}
+
+.markdown-source-view.mod-cm6 .cm-line:has(> .image-embed > figure.image-captions-right) {
+    text-align: end;
+}
+
+.markdown-source-view.mod-cm6 .cm-line > .image-embed > figure.image-captions-figure {
+    text-align: initial;
+}
