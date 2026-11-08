@@ -4,6 +4,7 @@ import { CaptionSettings, CaptionSettingTab, DEFAULT_SETTINGS } from './settings
 const filenamePlaceholder = '%'
 const filenameExtensionPlaceholder = '%.%'
 const alignmentKeywords = ['left', 'right', 'center']
+const embedSelector = '.image-embed, .video-embed'
 
 export interface ParsedCaption {
   text: string;
@@ -41,18 +42,42 @@ export default class ImageCaptions extends Plugin {
   observeDocument (doc: Document) {
     if (this.observers.has(doc)) return
     const observer = new MutationObserver((mutations: MutationRecord[]) => {
+      /*
+      Search only the changed nodes, not the whole subtree of each record's target:
+      N appends to one container would otherwise re-scan that container N times.
+      An embed may be the changed node, sit inside it, or contain it (an <img>
+      added to an existing embed).
+      */
+      const embeds = new Set<Element>()
+      const collect = (node: Node) => {
+        if (node.nodeType !== Node.ELEMENT_NODE) return
+        const el = node as Element
+        const container = el.closest(embedSelector)
+        if (container) embeds.add(container)
+        // Search for all .image-embed nodes. Could be <div> or <span>
+        el.querySelectorAll(embedSelector).forEach(embed => embeds.add(embed))
+      }
       mutations.forEach((rec: MutationRecord) => {
-        if (rec.type === 'childList') {
-          (<Element>rec.target)
-            // Search for all .image-embed nodes. Could be <div> or <span>
-            .querySelectorAll('.image-embed, .video-embed')
-            .forEach(imageEmbedContainer => { void this.processEmbedContainer(imageEmbedContainer) })
+        if (rec.type === 'attributes') {
+          // An attribute change adds no embeds, so only the target's own embed needs a pass
+          const container = (rec.target as Element).closest(embedSelector)
+          if (container) embeds.add(container)
+        } else {
+          rec.addedNodes.forEach(collect)
         }
       })
+      embeds.forEach(imageEmbedContainer => { void this.processEmbedContainer(imageEmbedContainer) })
     })
     observer.observe(doc.body, {
       subtree: true,
-      childList: true
+      childList: true,
+      /*
+      Live Preview updates the alt text of an existing embed in place when the
+      caption is edited, which adds no nodes. Also watch src and width, the other
+      attributes processEmbedContainer reads.
+      */
+      attributes: true,
+      attributeFilter: ['alt', 'src', 'width']
     })
     this.observers.set(doc, observer)
   }
